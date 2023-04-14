@@ -17,7 +17,17 @@ def close_storage(error):
     """Close the storage connection after the app context is torn down."""
     storage.close()
 
+@app.errorhandler(404)
+    """404 Error"""
+    return make_response(jsonify({'error': "Not found"}), 404)
+
 if __name__ == "__main__":
-    host = getenv("HBNB_API_HOST", "0.0.0.0")
-    port = getenv("HBNB_API_PORT", 5000)
+    host = getenv("HBNB_API_HOST")
+    port = getenv("HBNB_API_PORT")
+
+    if not host:
+        host = '0.0.0.0'
+    if not port:
+        port = '5001'
+
     app.run(host=host, port=port, threaded=True, debug='true')
