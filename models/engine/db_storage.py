@@ -105,22 +105,3 @@ class DBStorage:
 
         return count
 
-    """
-    def get(self, cls, id):
-        ""retrieve one object""
-        key = cls.__name__ + "." + id
-        return self.__objects.get(key)
-
-    def count(self, cls=None):
-        ""Count the number of objects in storage""
-        if cls is not None:
-            count = 0
-            for obj in self.all(cls).values():
-                count += 1
-            return count
-        else:
-            count = 0
-            for obj in self.all().values():
-                count += 1
-            return count
-    """
