@@ -1,7 +1,6 @@
 #!/usr/bin/python3
-"""
-States module to interface with the API
-"""
+"""states request"""
+
 from api.v1.views import (app_views, City, Place, storage)
 from flask import (request, jsonify, abort)
 
