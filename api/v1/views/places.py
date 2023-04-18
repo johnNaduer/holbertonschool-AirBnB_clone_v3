@@ -1,6 +1,5 @@
 #!/usr/bin/python3
-"""
-View for Place objects that handles default API actions
+"""View for Place objects that handles default API actions
 In the file api/v1/views/places.py
 """
 
