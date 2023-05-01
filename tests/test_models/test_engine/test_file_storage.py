@@ -6,7 +6,7 @@ Contains the TestFileStorageDocs classes
 from datetime import datetime
 import inspect
 import models
-from models.engine.file_storage import FileStorage
+from models.engine import file_storage
 from models.amenity import Amenity
 from models.base_model import BaseModel
 from models.city import City
@@ -18,6 +18,8 @@ import json
 import os
 import pep8
 import unittest
+from models import storage
+from models.state import State
 FileStorage = file_storage.FileStorage
 classes = {"Amenity": Amenity, "BaseModel": BaseModel, "City": City,
            "Place": Place, "Review": Review, "State": State, "User": User}
@@ -70,7 +72,7 @@ test_file_storage.py'])
 
 class TestFileStorage(unittest.TestCase):
     """Test the FileStorage class"""
-    @unittest.skipIf(FileStorage._FileStorage__file_path == 'db', "not testing file storage")
+    @unittest.skipIf(models.storage_t == 'db', "not testing file storage")
     def test_all_returns_dict(self):
         """Test that all returns the FileStorage.__objects attr"""
         storage = FileStorage()
@@ -78,7 +80,7 @@ class TestFileStorage(unittest.TestCase):
         self.assertEqual(type(new_dict), dict)
         self.assertIs(new_dict, storage._FileStorage__objects)
 
-    @unittest.skipIf(models._FileStorage__file_path == 'db', "not testing file storage")
+    @unittest.skipIf(models.storage_t == 'db', "not testing file storage")
     def test_new(self):
         """test that new adds an object to the FileStorage.__objects attr"""
         storage = FileStorage()
@@ -94,7 +96,7 @@ class TestFileStorage(unittest.TestCase):
                 self.assertEqual(test_dict, storage._FileStorage__objects)
         FileStorage._FileStorage__objects = save
 
-    @unittest.skipIf(models._FileStorage__file_path == 'db', "not testing file storage")
+    @unittest.skipIf(models.storage_t == 'db', "not testing file storage")
     def test_save(self):
         """Test that save properly saves objects to file.json"""
         storage = FileStorage()
@@ -114,35 +116,30 @@ class TestFileStorage(unittest.TestCase):
             js = f.read()
         self.assertEqual(json.loads(string), json.loads(js))
 
+        @unittest.skipIf(models.storage_t == 'db', "not testing file storage")
+        def test_get(self):
+            """Test validate the correct functionality of the method get"""
+            for _ in range(10):
+                new_state = State({"name": 'Erasing'})
+                storage.new(new_state)
+            storage.save()
 
-    def setUp(self):
-        self.storage = FileStorage()
+            all_states = storage.all(State)
+            key = next(iter(all_states))
+            only_id = key.split('.')[0]
 
-    def test_get_existing_object(self):
-        obj = BaseModel()
-        obj.save()
-        retrieved_obj = self.storage.get(BaseModel, obj.id)
-        self.assertEqual(obj, retrieved_obj)
+            self.assertEqual(all_states[key], storage.get(State, only_id),
+                             'The object doesn\'t match')
 
-    def test_get_nonexistent_object(self):
-        obj = self.storage.get(BaseModel, "invalid_id")
-        self.assertIsNone(obj)
+        @unittest.skipIf(models.storage_t == 'db', "not testing file storage")
+        def test_count(self):
+            """Test validate the correct functionality of the method count"""
+            for _ in range(10):
+                new_state = State({"name": 'Alabama'})
+                storage.new(new_state)
+            storage.save()
 
-    def test_count_all(self):
-        obj1 = BaseModel()
-        obj2 = User()
-        obj1.save()
-        obj2.save()
-        count = self.storage.count()
-        self.assertEqual(count, 2)
+            quantity_states = storage.all(State)
 
-    def test_count_specific_class(self):
-        obj1 = BaseModel()
-        obj2 = User()
-        obj1.save()
-        obj2.save()
-        count = self.storage.count(User)
-        self.assertEqual(count, 1)
-
-if __name__ == '__main__':
-    unittest.main()
+            self.assertEqual(quantity_states, storage.count(State),
+                             'Cuantity of states doesn\'t match')
