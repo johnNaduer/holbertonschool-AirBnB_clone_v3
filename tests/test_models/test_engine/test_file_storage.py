@@ -6,7 +6,7 @@ Contains the TestFileStorageDocs classes
 from datetime import datetime
 import inspect
 import models
-from models.engine import file_storage
+from models.engine.file_storage import FileStorage
 from models.amenity import Amenity
 from models.base_model import BaseModel
 from models.city import City
@@ -70,7 +70,7 @@ test_file_storage.py'])
 
 class TestFileStorage(unittest.TestCase):
     """Test the FileStorage class"""
-    @unittest.skipIf(models.storage_t == 'db', "not testing file storage")
+    @unittest.skipIf(FileStorage._FileStorage__file_path == 'db', "not testing file storage")
     def test_all_returns_dict(self):
         """Test that all returns the FileStorage.__objects attr"""
         storage = FileStorage()
@@ -78,7 +78,7 @@ class TestFileStorage(unittest.TestCase):
         self.assertEqual(type(new_dict), dict)
         self.assertIs(new_dict, storage._FileStorage__objects)
 
-    @unittest.skipIf(models.storage_t == 'db', "not testing file storage")
+    @unittest.skipIf(models._FileStorage__file_path == 'db', "not testing file storage")
     def test_new(self):
         """test that new adds an object to the FileStorage.__objects attr"""
         storage = FileStorage()
@@ -94,7 +94,7 @@ class TestFileStorage(unittest.TestCase):
                 self.assertEqual(test_dict, storage._FileStorage__objects)
         FileStorage._FileStorage__objects = save
 
-    @unittest.skipIf(models.storage_t == 'db', "not testing file storage")
+    @unittest.skipIf(models._FileStorage__file_path == 'db', "not testing file storage")
     def test_save(self):
         """Test that save properly saves objects to file.json"""
         storage = FileStorage()
@@ -113,3 +113,36 @@ class TestFileStorage(unittest.TestCase):
         with open("file.json", "r") as f:
             js = f.read()
         self.assertEqual(json.loads(string), json.loads(js))
+
+
+    def setUp(self):
+        self.storage = FileStorage()
+
+    def test_get_existing_object(self):
+        obj = BaseModel()
+        obj.save()
+        retrieved_obj = self.storage.get(BaseModel, obj.id)
+        self.assertEqual(obj, retrieved_obj)
+
+    def test_get_nonexistent_object(self):
+        obj = self.storage.get(BaseModel, "invalid_id")
+        self.assertIsNone(obj)
+
+    def test_count_all(self):
+        obj1 = BaseModel()
+        obj2 = User()
+        obj1.save()
+        obj2.save()
+        count = self.storage.count()
+        self.assertEqual(count, 2)
+
+    def test_count_specific_class(self):
+        obj1 = BaseModel()
+        obj2 = User()
+        obj1.save()
+        obj2.save()
+        count = self.storage.count(User)
+        self.assertEqual(count, 1)
+
+if __name__ == '__main__':
+    unittest.main()
