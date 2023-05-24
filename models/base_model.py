@@ -5,6 +5,8 @@ Contains class BaseModel
 
 from datetime import datetime
 import models
+from os import getenv
+import sqlalchemy
 from sqlalchemy import Column, String, DateTime
 from sqlalchemy.ext.declarative import declarative_base
 import uuid
@@ -30,17 +32,14 @@ class BaseModel:
             for key, value in kwargs.items():
                 if key != "__class__":
                     setattr(self, key, value)
-
             if kwargs.get("created_at", None) and type(self.created_at) is str:
                 self.created_at = datetime.strptime(kwargs["created_at"], time)
             else:
                 self.created_at = datetime.utcnow()
-
             if kwargs.get("updated_at", None) and type(self.updated_at) is str:
                 self.updated_at = datetime.strptime(kwargs["updated_at"], time)
             else:
                 self.updated_at = datetime.utcnow()
-
             if kwargs.get("id", None) is None:
                 self.id = str(uuid.uuid4())
         else:
@@ -57,7 +56,10 @@ class BaseModel:
         """updates the attribute 'updated_at' with the current datetime"""
         self.updated_at = datetime.utcnow()
         models.storage.new(self)
-        models.storage.save()
+        try:
+            models.storage.save()
+        except Exception as e:
+            raise e
 
     def to_dict(self):
         """returns a dictionary containing all keys/values of the instance"""

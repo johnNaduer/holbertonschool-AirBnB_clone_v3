@@ -10,7 +10,7 @@ from models.place import Place
 from models.review import Review
 from models.state import State
 from models.user import User
-from os import abort, getenv
+from os import getenv
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
 
@@ -55,7 +55,44 @@ class DBStorage:
 
     def save(self):
         """commit all changes of the current database session"""
-        self.__session.commit()
+        if not self.__session:
+            print("No session established")
+            return
+
+        try:
+            self.__session.commit()
+        except Exception as e:
+            msg_0 = str(e).partition('\n')[0]
+            print(msg_0 if msg_0 else str(e))
+            self.__session.rollback()
+            raise e
+
+
+    def get(self, cls, id):
+        """retrieves an object of class @cls and @id"""
+        if cls not in classes.values():
+            print("Class does not exist.")
+            return None
+
+        if not isinstance(id, str):
+            print("id attribute must be a string.")
+            return None
+
+        searched_key = f"{cls.__name__}.{id}"
+        all_cls_objs = self.all(cls)
+        if searched_key not in all_cls_objs:
+            # print(f"{cls.__name__} with id of {id} not found.")
+            return None
+
+        return all_cls_objs[searched_key]
+
+    def count(self, cls=None):
+        """retrieves an object of class @cls and @id"""
+        if cls and cls not in classes.values():
+            print("Class does not exist.")
+            return
+
+        return len(self.all(cls) if cls else self.all())
 
     def delete(self, obj=None):
         """delete from the current database session obj if not None"""
@@ -72,21 +109,3 @@ class DBStorage:
     def close(self):
         """call remove() method on the private session attribute"""
         self.__session.remove()
-
-    def get(self, cls, id):
-        """retrieves one object"""
-        if (cls is not None):
-            result = self.all(cls)
-            if (result == {}):
-                return (None)
-            class_name = cls.__name__
-            key = '{}.{}'.format(class_name, id)
-
-            return (result.get(key, None))
-        return (None)
-
-    def count(self, cls=None):
-        """"counts the number of objects in storage"""
-        result = self.all() if (cls is None) else self.all(cls)
-
-        return (len(result))

@@ -1,38 +1,34 @@
 #!/usr/bin/python3
-"""Main Flask App"""
-from flask import Flask, jsonify
-from models import storage
-from api.v1.views import app_views
+""" This module starts a Flask Web application that listens on 0.0.0.0
+    (all network interfaces) and port 5000
+"""
+from os import environ
+from flask import Flask, make_response, jsonify
 from flask_cors import CORS
-from os import getenv
-
+from models import storage
+from .views import app_views
 
 app = Flask(__name__)
-
 app.register_blueprint(app_views)
-
-CORS(app, resources={r"/*": {"origins": '0.0.0.0'}})
-
-
-@app.errorhandler(404)
-def not_found(e):
-    """returns a JSON"reponse if there is an error 404"""
-    return jsonify({'error': 'Not found'}), 404
+cors = CORS(app, resources={r"/api/v1/*": {"origins": "0.0.0.0"}})
 
 
 @app.teardown_appcontext
 def close_session(self):
-    """Close the SQLAlchemy session of the request or reload the json"""
+    """Removes the current session"""
     storage.close()
 
 
-if (__name__ == "__main__"):
-    ip = getenv('HBNB_API_HOST')
-    port = getenv('HBNB_API_PORT')
+@app.errorhandler(404)
+def not_found(error):
+    """handle 404 status code"""
+    return jsonify({"error": "Not found"}), 404
 
-    if (not ip):
-        ip = '0.0.0.0'
-    if (not port):
-        port = '5000'
 
-    app.run(host=ip, port=port, threaded=True, debug=True)  # Remove debug
+if __name__ == "__main__":
+    HBNB_API_HOST = environ.get("HBNB_API_HOST", "0.0.0.0")
+    HBNB_API_PORT = environ.get("HBNB_API_PORT", 5000)
+    try:
+        app.run(host=HBNB_API_HOST, port=HBNB_API_PORT, threaded=True)
+    except Exception as e:
+        print("Error: {}".format(str(e)))
